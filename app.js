@@ -31,7 +31,13 @@ function renderBoard() {
       squareEl.className = `square ${(rank + fileIndex) % 2 === 0 ? "light" : "dark"}`;
       squareEl.dataset.square = square;
       squareEl.type = "button";
-      squareEl.textContent = piece ? pieceMap[piece.color === "w" ? piece.type.toUpperCase() : piece.type] : "";
+      if (piece) {
+        const isWhitePiece = piece.color === "w";
+        squareEl.textContent = pieceMap[isWhitePiece ? piece.type.toUpperCase() : piece.type];
+        squareEl.classList.add(isWhitePiece ? "piece-white" : "piece-black");
+      } else {
+        squareEl.textContent = "";
+      }
 
       if (square === selectedSquare) {
         squareEl.classList.add("selected");
