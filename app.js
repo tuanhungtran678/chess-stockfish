@@ -16,8 +16,20 @@ const pieceMap = {
 let selectedSquare = null;
 let legalTargets = [];
 
-const engine = new Worker("https://cdn.jsdelivr.net/npm/stockfish@16.0.0/src/stockfish.js");
-engine.postMessage("uci");
+const engine = initEngine();
+
+function initEngine() {
+  try {
+    const sf = new Worker("stockfish-worker.js");
+    sf.postMessage("uci");
+    sf.onmessage = onEngineMessage;
+    sf.onerror = () => updateStatus("Không thể tải Stockfish. Vui lòng tải lại trang.");
+    return sf;
+  } catch (error) {
+    updateStatus("Không thể tải Stockfish. Vui lòng tải lại trang.");
+    return null;
+  }
+}
 
 function renderBoard() {
   boardEl.innerHTML = "";
@@ -84,6 +96,11 @@ function onSquareClick(square) {
 }
 
 function playEngineMove() {
+  if (!engine) {
+    updateStatus("Không có Stockfish để đi quân.");
+    return;
+  }
+
   if (game.game_over()) {
     updateStatus(getGameOverText());
     return;
@@ -94,8 +111,8 @@ function playEngineMove() {
   engine.postMessage(`go depth ${depth}`);
 }
 
-engine.onmessage = (event) => {
-  const line = String(event.data);
+function onEngineMessage(event) {
+  const line = String(event && event.data ? event.data : event);
   if (!line.startsWith("bestmove")) {
     return;
   }
@@ -120,7 +137,7 @@ engine.onmessage = (event) => {
   } else {
     updateStatus("Đến lượt bạn (quân trắng).");
   }
-};
+}
 
 function updateStatus(text) {
   statusEl.textContent = text;
